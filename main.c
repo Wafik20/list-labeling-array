@@ -43,6 +43,7 @@ void print_array(int *arr, int size)
     {
         printf("%d, ", arr[i]);
     }
+    printf("\n");
 }
 
 void zero_array(int *arr, int size)
@@ -60,7 +61,7 @@ void print_tree_helper(lla_node *node, int depth)
         return;
     }
 
-    printf("is_leaf: %d, size: %d, depth: %d, tau_k: %.4f, win_start: %d, win_end: %d\n", node->is_leaf, node->size, depth, node->TAU_K, node->window_start, node->window_end);
+    printf("is_leaf: %d, size: %d, depth: %d, tau: %.4f, tau_k: %.4f, win_start: %d, win_end: %d\n", node->is_leaf, node->size, depth, node->tau, node->TAU_K, node->window_start, node->window_end);
 
     print_tree_helper(node->left, depth + 1);
     print_tree_helper(node->right, depth + 1);
@@ -74,6 +75,10 @@ void print_lla(lla *my_lla)
         printf("The LLA is empty.\n");
         return;
     }
+    printf("Array snapshot:\n");
+    int arr_size = my_lla->N * my_lla->C;
+    print_array(my_lla->arr, arr_size);
+
 
     print_tree_helper(root, 0);
 
@@ -181,6 +186,9 @@ lla *create_lla(int N, int C, double TAU_0, double TAU_D)
 // Should return first ansestor in threshhold or a leaf indicating that insertion is legal.
 lla_node *insert_help(lla_node *node, int *arr, int depth, int MAX_DEPTH, int x)
 {
+    if(!node){
+        return null;
+    }
 
     int window_start = node->window_start;
     int window_end = node->window_end;
@@ -206,14 +214,14 @@ lla_node *insert_help(lla_node *node, int *arr, int depth, int MAX_DEPTH, int x)
 
     if (x > element_at_window_end)
     { /* traverse right */
-        insert_help(node->right, arr, depth + 1, MAX_DEPTH, x);
+        return insert_help(node->right, arr, depth + 1, MAX_DEPTH, x);
     }
     else
     { /* traverse left */
-        insert_help(node->left, arr, depth + 1, MAX_DEPTH, x);
+        return insert_help(node->left, arr, depth + 1, MAX_DEPTH, x);
     }
-    return null;
 }
+
 // a very long sorted array, and an element
 // You get the whole array, the start index where to start spreading out, the end index where to stop spreading out, the element to be inserted.
 // input arr=[......, 1, 5, 0, 0, 0, ......], start_index, end_index, x = 2
@@ -287,7 +295,7 @@ void insert(lla *lla, int x)
     // 1- traverse the tree
     lla_node *root = lla->root;
     int *arr = lla->arr;
-    lla_node *node = insert_help(root, arr, 0, x, lla->MAX_DEPTH); // either a leaf, or nearest ancestor in threshhold
+    lla_node *node = insert_help(root, arr, 0, lla->MAX_DEPTH, x); // either a leaf, or nearest ancestor in threshhold
 
     if (!node)
     {
@@ -298,10 +306,12 @@ void insert(lla *lla, int x)
     if (node->is_leaf)
     { // we succeeded, got a leaf
         insert_and_distribute_array_range(arr, node->window_start, node->window_end, x);
+        printf("insert %d, and redistribute range [%d, %d]\n", x, node->window_start, node->window_end);
     }
     else
     { // we need to rebalance, got first ansestor in threshhold
         insert_and_distribute_array_range(arr, node->window_start, node->window_end, x);
+        printf("insert %d, and redistribute range [%d, %d]\n", x, node->window_start, node->window_end);
     }
     return;
 }
@@ -316,6 +326,7 @@ int main()
     double TAU_D = 0.75;
 
     lla *my_lla = create_lla(N, C, TAU_0, TAU_D);
+    insert(my_lla, 10);
     insert(my_lla, 1);
     print_lla(my_lla);
     return 0;
