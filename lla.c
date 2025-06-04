@@ -170,8 +170,8 @@ lla_node *insert_help(lla_node *node, int *arr, int depth, int MAX_DEPTH, int x)
 
     if (new_tau > node->TAU_K)
     {
-        printf("exceeded threshhold, return nearest anscestor in threshhold");
-        return node; // should be node->parent
+        //printf("exceeded threshhold, return nearest anscestor in threshhold\n");
+        return node->parent; // should be node->parent
     }
 
     // Set new size and density after insertion
@@ -283,7 +283,7 @@ void insert(lla *lla, int x)
     if (node->is_leaf)
     { // we succeeded, got a leaf
         insert_and_distribute_array_range(arr, node->window_start, node->window_end, x);
-        printf("insert %d, and redistribute range [%d, %d]\n", x, node->window_start, node->window_end);
+        //printf("insert %d, and redistribute range [%d, %d]\n", x, node->window_start, node->window_end);
     }
     else
     { // we need to rebalance, got first ansestor in threshhold
@@ -296,7 +296,7 @@ void insert(lla *lla, int x)
         }
 
         insert_and_distribute_array_range(arr, parent->window_start, parent->window_end, x);
-        printf("insert %d, and redistribute range [%d, %d]\n", x, parent->window_start, parent->window_end);
+        //printf("insert %d, and redistribute range [%d, %d]\n", x, parent->window_start, parent->window_end);
     }
     return;
 }
