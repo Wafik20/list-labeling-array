@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "lla.h"
 
 // ################# HELPER FUNCTIONS ##############
@@ -125,8 +126,9 @@ void init_balancing_tree(lla_node *node, int depth, int MAX_DEPTH, int WINDOW_SI
 
 lla *create_lla(int N, int C, double TAU_0, double TAU_D)
 {
-    if(C >= N || TAU_0 > TAU_D){
-        printf("Illegal coefficients: C >= N or TAU_0 > TAU_D \n");
+    if (C <= 0 || C >= N || TAU_0 > TAU_D)
+    {
+        printf("Illegal coefficients: C <= 0 or C >= N or TAU_0 > TAU_D \n");
         exit(1);
     }
 
@@ -136,9 +138,10 @@ lla *create_lla(int N, int C, double TAU_0, double TAU_D)
         printf("Malloc failed\n");
         exit(1);
     }
-    
+
     my_lla->arr = (int *)malloc(sizeof(int) * N * C);
-    if(!my_lla->arr){
+    if (!my_lla->arr)
+    {
         printf("Malloc failed\n");
         exit(1);
     }
@@ -169,7 +172,7 @@ lla *create_lla(int N, int C, double TAU_0, double TAU_D)
 }
 
 // Should return first ansestor in threshhold or a leaf indicating that insertion is legal.
-lla_node *insert_help(lla_node *node, int *arr, int depth, int MAX_DEPTH, int x)
+lla_node *insert_help_recursive(lla_node *node, int *arr, int depth, int MAX_DEPTH, int x)
 {
     if (!node)
     {
@@ -185,7 +188,7 @@ lla_node *insert_help(lla_node *node, int *arr, int depth, int MAX_DEPTH, int x)
 
     if (new_tau > node->TAU_K)
     {
-        //printf("exceeded threshhold, return nearest anscestor in threshhold\n");
+        // printf("exceeded threshhold, return nearest anscestor in threshhold\n");
         return node->parent; // should be node->parent
     }
 
@@ -200,12 +203,50 @@ lla_node *insert_help(lla_node *node, int *arr, int depth, int MAX_DEPTH, int x)
 
     if (x > element_at_window_end)
     { /* traverse right */
-        return insert_help(node->right, arr, depth + 1, MAX_DEPTH, x);
+        return insert_help_recursive(node->right, arr, depth + 1, MAX_DEPTH, x);
     }
     else
     { /* traverse left */
-        return insert_help(node->left, arr, depth + 1, MAX_DEPTH, x);
+        return insert_help_recursive(node->left, arr, depth + 1, MAX_DEPTH, x);
     }
+}
+lla_node *insert_help_iterative(lla_node *node, int *arr, int depth, int MAX_DEPTH, int x)
+{
+    if(!node || !arr){
+        printf("Insert help failed, node is null");
+        exit(1);
+    }
+    while (node && depth < MAX_DEPTH)
+    {
+        int window_start = node->window_start;
+        int window_end = node->window_end;
+        int partition_size = window_end - window_start + 1;
+        int new_size = node->size + 1;
+        double new_tau = (double)new_size / partition_size;
+
+        if (new_tau > node->TAU_K)
+        {
+            return node->parent;
+        }
+
+        node->size = new_size;
+        node->tau = new_tau;
+
+        int element_at_window_end = arr[window_end];
+
+        if (x > element_at_window_end)
+        {
+            node = node->right;
+        }
+        else
+        {
+            node = node->left;
+        }
+
+        depth++;
+    }
+
+    return node;
 }
 
 // a very long sorted array, and an element
@@ -220,7 +261,8 @@ void insert_and_distribute_array_range(int *arr, int start_index, int end_index,
     int range_size = end_index - start_index + 1;
     int non_zero_count = 0;
     int *temp = (int *)malloc(range_size * sizeof(int));
-    if(!temp){
+    if (!temp)
+    {
         printf("Malloc failed\n");
         exit(1);
     }
@@ -280,6 +322,119 @@ void insert_and_distribute_array_range(int *arr, int start_index, int end_index,
     free(temp);
 }
 
+// High-performance optimized version
+void insert_and_distribute_array_range_optimized(int *arr, int start_index, int end_index, int x)
+{
+    int range_size = end_index - start_index + 1;
+    
+    // Stack allocation for small ranges to avoid malloc overhead
+    const int STACK_THRESHOLD = 1024;
+    int *temp;
+    int stack_temp[STACK_THRESHOLD];
+    
+    if (range_size <= STACK_THRESHOLD) {
+        temp = stack_temp;
+    } else {
+        temp = (int *)malloc(range_size * sizeof(int));
+        if (__builtin_expect(!temp, 0)) {
+            printf("Malloc failed\n");
+            exit(1);
+        }
+    }
+    
+    // Single pass: collect non-zeros and insert x in sorted position
+    int temp_idx = 0;
+    int x_inserted = 0;
+    int *arr_ptr = arr + start_index;  // Pointer arithmetic optimization
+    
+    // Unroll loop for better performance
+    int i = 0;
+    int loop_end = range_size & ~3;  // Process 4 at a time
+    
+    for (; i < loop_end; i += 4) {
+        // Process 4 elements at once with manual unrolling
+        int val0 = arr_ptr[i];
+        int val1 = arr_ptr[i+1]; 
+        int val2 = arr_ptr[i+2];
+        int val3 = arr_ptr[i+3];
+        
+        // Branchless non-zero check and insertion
+        if (val0 != 0) {
+            if (!x_inserted && x < val0) {
+                temp[temp_idx++] = x;
+                x_inserted = 1;
+            }
+            temp[temp_idx++] = val0;
+        }
+        if (val1 != 0) {
+            if (!x_inserted && x < val1) {
+                temp[temp_idx++] = x;
+                x_inserted = 1;
+            }
+            temp[temp_idx++] = val1;
+        }
+        if (val2 != 0) {
+            if (!x_inserted && x < val2) {
+                temp[temp_idx++] = x;
+                x_inserted = 1;
+            }
+            temp[temp_idx++] = val2;
+        }
+        if (val3 != 0) {
+            if (!x_inserted && x < val3) {
+                temp[temp_idx++] = x;
+                x_inserted = 1;
+            }
+            temp[temp_idx++] = val3;
+        }
+    }
+    
+    // Handle remaining elements
+    for (; i < range_size; i++) {
+        int val = arr_ptr[i];
+        if (val != 0) {
+            if (!x_inserted && x < val) {
+                temp[temp_idx++] = x;
+                x_inserted = 1;
+            }
+            temp[temp_idx++] = val;
+        }
+    }
+    
+    if (!x_inserted) {
+        temp[temp_idx++] = x;
+    }
+    
+    int non_zero_count = temp_idx;
+    
+    // Fast zero-fill using memset
+    memset(arr_ptr, 0, range_size * sizeof(int));
+    
+    // Optimized distribution with integer arithmetic
+    if (non_zero_count > 0) {
+        // Use fixed-point arithmetic to avoid repeated division
+        int spacing_fixed = (range_size << 16) / non_zero_count;  // 16-bit fixed point
+        int pos_fixed = 0;
+        
+        for (int i = 0; i < non_zero_count; i++) {
+            int pos = pos_fixed >> 16;
+            
+            // Bounds check to prevent overflow
+            if (__builtin_expect(pos >= range_size, 0)) {
+                pos = range_size - (non_zero_count - i);
+            }
+            
+            arr_ptr[pos] = temp[i];
+            pos_fixed += spacing_fixed;
+        }
+    }
+    
+    // Only free if we used malloc
+    if (range_size > STACK_THRESHOLD) {
+        free(temp);
+    }
+}
+
 void insert(lla *lla, int x)
 {
     lla_node *root = lla->root;
@@ -291,7 +446,7 @@ void insert(lla *lla, int x)
         exit(1);
     }
 
-    lla_node *node = insert_help(root, arr, 0, lla->MAX_DEPTH, x); // either a leaf, or nearest ancestor in threshhold
+    lla_node *node = insert_help_iterative(root, arr, 0, lla->MAX_DEPTH, x); // either a leaf, or nearest ancestor in threshhold
 
     if (!node)
     {
@@ -301,8 +456,8 @@ void insert(lla *lla, int x)
 
     if (node->is_leaf)
     { // we succeeded, got a leaf
-        insert_and_distribute_array_range(arr, node->window_start, node->window_end, x);
-        //printf("insert %d, and redistribute range [%d, %d]\n", x, node->window_start, node->window_end);
+        insert_and_distribute_array_range_optimized(arr, node->window_start, node->window_end, x);
+        // printf("insert %d, and redistribute range [%d, %d]\n", x, node->window_start, node->window_end);
     }
     else
     { // we need to rebalance, got first ansestor in threshhold
@@ -314,8 +469,8 @@ void insert(lla *lla, int x)
             exit(1);
         }
 
-        insert_and_distribute_array_range(arr, parent->window_start, parent->window_end, x);
-        //printf("insert %d, and redistribute range [%d, %d]\n", x, parent->window_start, parent->window_end);
+        insert_and_distribute_array_range_optimized(arr, parent->window_start, parent->window_end, x);
+        // printf("insert %d, and redistribute range [%d, %d]\n", x, parent->window_start, parent->window_end);
     }
     return;
 }

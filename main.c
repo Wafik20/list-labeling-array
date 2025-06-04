@@ -18,11 +18,11 @@ double log2_n(double n)
 int main()
 {
     // Test parameters
-    const int N = 10000000;
+    const int N = 1000000;
     const int C = 8;
     const double TAU_0 = 0.5;
     const double TAU_D = 0.75;
-    const int NUM_INSERTIONS = 10000000;
+    const int NUM_INSERTIONS = 1000000;
 
     // Create LLA
     lla *my_lla = create_lla(N, C, TAU_0, TAU_D);
@@ -31,7 +31,7 @@ int main()
     double* times = malloc(NUM_INSERTIONS * sizeof(double));
     double* log2n_values = malloc(NUM_INSERTIONS * sizeof(double));
 
-    printf("Testing insert() operation runtime complexity (vs log₂(n))...\n");
+    printf("Testing insert() operation runtime complexity (vs log(n))...\n");
     printf("N = %d, C = %d, TAU_0 = %.2f, TAU_D = %.2f\n", N, C, TAU_0, TAU_D);
     printf("Performing %d insertions...\n\n", NUM_INSERTIONS);
 
@@ -49,7 +49,7 @@ int main()
 
         if ((i + 1) % 100 == 0)
         {
-            printf("Completed %d insertions\n", i + 1);
+            //printf("Completed %d insertions\n", i + 1);
         }
     }
 
