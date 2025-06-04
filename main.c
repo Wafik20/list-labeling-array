@@ -18,18 +18,18 @@ double log2_n(double n)
 int main()
 {
     // Test parameters
-    const int N = 100000;
+    const int N = 10000000;
     const int C = 8;
     const double TAU_0 = 0.5;
     const double TAU_D = 0.75;
-    const int NUM_INSERTIONS = 90000;
+    const int NUM_INSERTIONS = 1000000;
 
     // Create LLA
     lla *my_lla = create_lla(N, C, TAU_0, TAU_D);
 
     // Arrays to store measurements
-    double times[NUM_INSERTIONS];
-    double log2n_values[NUM_INSERTIONS];
+    double* times = malloc(NUM_INSERTIONS * sizeof(double));
+    double* log2n_values = malloc(NUM_INSERTIONS * sizeof(double));
 
     printf("Testing insert() operation runtime complexity (vs log₂(n))...\n");
     printf("N = %d, C = %d, TAU_0 = %.2f, TAU_D = %.2f\n", N, C, TAU_0, TAU_D);
@@ -76,6 +76,8 @@ int main()
     printf("Minimum insertion time: %.2f microseconds\n", times[0]);
 
     // Cleanup
+    free(times);
+    free(log2n_values);
     cleanup_lla(&my_lla);
     return 0;
 }

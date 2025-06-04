@@ -126,7 +126,17 @@ void init_balancing_tree(lla_node *node, int depth, int MAX_DEPTH, int WINDOW_SI
 lla *create_lla(int N, int C, double TAU_0, double TAU_D)
 {
     lla *my_lla = (lla *)malloc(sizeof(lla));
+    if (!my_lla)
+    {
+        printf("Malloc failed\n");
+        exit(1);
+    }
+    
     my_lla->arr = (int *)malloc(sizeof(int) * N * C);
+    if(!my_lla->arr){
+        printf("Malloc failed\n");
+        exit(1);
+    }
 
     my_lla->N = N;
     my_lla->C = C;
@@ -205,6 +215,10 @@ void insert_and_distribute_array_range(int *arr, int start_index, int end_index,
     int range_size = end_index - start_index + 1;
     int non_zero_count = 0;
     int *temp = (int *)malloc(range_size * sizeof(int));
+    if(!temp){
+        printf("Malloc failed\n");
+        exit(1);
+    }
     int temp_idx = 0;
     int x_inserted = 0;
 
