@@ -297,9 +297,14 @@ void insert_and_distribute_array_range(int *arr, int start_index, int end_index,
 
 void insert(lla *lla, int x)
 {
-    // 1- traverse the tree
     lla_node *root = lla->root;
     int *arr = lla->arr;
+
+    if(root->tau >= lla->TAU_0){ /* Don't insert when the array's density exceeds TAU_0 */
+        printf("insert failed: Root exceeded treshhold density. Increase N!");
+        exit(1);
+    }
+
     lla_node *node = insert_help(root, arr, 0, lla->MAX_DEPTH, x); // either a leaf, or nearest ancestor in threshhold
 
     if (!node)
@@ -332,14 +337,17 @@ void insert(lla *lla, int x)
 // ################# BEGIN MAIN ###################
 int main()
 {
-    int N = 4;
-    int C = 2;
+    int N = 16;
+    int C = 8;
     double TAU_0 = 0.5;
     double TAU_D = 0.75;
 
     lla *my_lla = create_lla(N, C, TAU_0, TAU_D);
     insert(my_lla, 10);
     insert(my_lla, 1);
+    insert(my_lla, 5);
+    insert(my_lla, 2);
+    insert(my_lla, 20);
     print_lla(my_lla);
     return 0;
 }
