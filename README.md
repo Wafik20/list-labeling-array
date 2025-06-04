@@ -1,16 +1,11 @@
 # List Labeling Array (LLA)
 
-A C implementation of a List Labeling Array data structure that maintains a sorted array with O(log²n) amortized insertion time and O(log²n) elements moved per insertion.
-
-## Overview
-
-The List Labeling Array (LLA) is a data structure that maintains a sorted array of elements while providing efficient insertion operations. It achieves O(log²n) amortized time complexity for insertions by using a balancing tree structure and density-based rebalancing. The structure also ensures that only O(log²n) elements are moved during each insertion operation.
+A C implementation of a List Labeling Array data structure that maintains a sorted array with O(log n) insertion time and O(log²n) amortized elements moved per insertion.
 
 ### Key Features
 
-- O(log²n) amortized insertion time
-- O(log²n) elements moved per insertion
-- Maintains sorted order of elements
+- O(log n) insertion time
+- O(log²n) amortized elements moved per insertion
 - Density-based rebalancing strategy
 - Memory-efficient implementation
 - Configurable parameters for balancing
