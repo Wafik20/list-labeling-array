@@ -22,7 +22,7 @@ int main()
     const int C = 8;
     const double TAU_0 = 0.5;
     const double TAU_D = 0.75;
-    const int NUM_INSERTIONS = 1000000;
+    const int NUM_INSERTIONS = 10000000;
 
     // Create LLA
     lla *my_lla = create_lla(N, C, TAU_0, TAU_D);
