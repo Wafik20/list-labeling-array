@@ -1,46 +1,134 @@
-# C Project with Auto-Building Makefile
+# List Labeling Array (LLA)
 
-This is a simple C project that uses a Makefile to automatically rebuild when source files change.
+A C implementation of a List Labeling Array data structure that maintains a sorted array with O(log²n) amortized insertion time and O(log²n) elements moved per insertion.
 
-## Building the Project
+## Overview
 
-To build the project, simply run:
+The List Labeling Array (LLA) is a data structure that maintains a sorted array of elements while providing efficient insertion operations. It achieves O(log²n) amortized time complexity for insertions by using a balancing tree structure and density-based rebalancing. The structure also ensures that only O(log²n) elements are moved during each insertion operation.
+
+### Key Features
+
+- O(log²n) amortized insertion time
+- O(log²n) elements moved per insertion
+- Maintains sorted order of elements
+- Density-based rebalancing strategy
+- Memory-efficient implementation
+- Configurable parameters for balancing
+
+## Implementation Details
+
+### Data Structure
+
+The LLA consists of two main components:
+1. A sorted array storing the elements
+2. A balancing tree that manages the density of array segments
+
+### Key Parameters
+
+- `N`: Size of the array
+- `C`: Capacity factor
+- `TAU_0`: Initial density threshold
+- `TAU_D`: Maximum density threshold
+
+### Core Operations
+
+- `create_lla(N, C, TAU_0, TAU_D)`: Creates a new LLA instance
+- `insert(lla, x)`: Inserts element x while maintaining sorted order
+- `cleanup_lla(lla)`: Frees all allocated memory
+
+## Building and Running
+
+### Prerequisites
+
+- GCC compiler
+- Make
+- entr (for auto-rebuild feature)
+
+### Building
+
 ```bash
 make
 ```
 
-This will compile all `.c` files in the directory and create an executable named `program`.
+### Running
 
-## Running the Program
-
-After building, you can run the program with:
 ```bash
 ./program
 ```
 
-## Auto-Rebuild and Run
+### Auto-Rebuild and Run
 
-To automatically rebuild and run the program whenever you make changes to your source files:
+To automatically rebuild and run when source files change:
 ```bash
 ./watch.sh
 ```
 
-This requires `entr` to be installed. You can install it using:
-- macOS: `brew install entr`
-- Ubuntu/Debian: `sudo apt-get install entr`
-- Fedora: `sudo dnf install entr`
+### Cleaning
 
-## Cleaning Build Files
-
-To clean up all build artifacts, run:
 ```bash
 make clean
 ```
 
-## Features
+## Performance Testing
 
-- Automatically detects changes in source files
-- Compiles with warning flags enabled (-Wall -Wextra)
-- Includes debug symbols (-g)
-- Simple and clean build process
-- Auto-rebuild and run on file changes (like nodemon)
+The project includes a performance test suite that:
+- Measures insertion time complexity
+- Verifies O(log²n) amortized time
+- Provides correlation analysis with theoretical complexity
+- Reports detailed timing statistics
+
+## Project Structure
+
+```
+.
+├── lla.h          # Header file with declarations
+├── lla.c          # Implementation file
+├── main.c         # Test driver and performance measurements
+├── Makefile       # Build configuration
+└── watch.sh       # Auto-rebuild script
+```
+
+## Dependencies
+
+- `entr` for auto-rebuild feature:
+  - macOS: `brew install entr`
+  - Ubuntu/Debian: `sudo apt-get install entr`
+  - Fedora: `sudo dnf install entr`
+
+## Usage Example
+
+```c
+#include "lla.h"
+
+int main() {
+    // Create LLA with N=1024, C=8, TAU_0=0.5, TAU_D=0.75
+    lla *my_lla = create_lla(1024, 8, 0.5, 0.75);
+    
+    // Insert elements
+    insert(my_lla, 10);
+    insert(my_lla, 5);
+    insert(my_lla, 15);
+    
+    // Print current state
+    print_lla(my_lla);
+    
+    // Cleanup
+    cleanup_lla(&my_lla);
+    return 0;
+}
+```
+
+## Performance Characteristics
+
+- Insertion: O(log²n) amortized time
+- Elements moved per insertion: O(log²n)
+- Space: O(n) where n is the number of elements
+- Memory overhead: O(log n) for the balancing tree
+
+## References
+
+1. McCauley, S., Moseley, B., Niaparast, A., & Singh, S. (2023). Online List Labeling with Predictions. arXiv:2305.10536
+
+## Contributing
+
+Feel free to submit issues and enhancement requests!
