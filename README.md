@@ -18,6 +18,18 @@ After building, you can run the program with:
 ./program
 ```
 
+## Auto-Rebuild and Run
+
+To automatically rebuild and run the program whenever you make changes to your source files:
+```bash
+./watch.sh
+```
+
+This requires `entr` to be installed. You can install it using:
+- macOS: `brew install entr`
+- Ubuntu/Debian: `sudo apt-get install entr`
+- Fedora: `sudo dnf install entr`
+
 ## Cleaning Build Files
 
 To clean up all build artifacts, run:
@@ -31,3 +43,4 @@ make clean
 - Compiles with warning flags enabled (-Wall -Wextra)
 - Includes debug symbols (-g)
 - Simple and clean build process
+- Auto-rebuild and run on file changes (like nodemon)
