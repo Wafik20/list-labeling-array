@@ -20,6 +20,7 @@ struct lla_node
     int size;
     lla_node *left;
     lla_node *right;
+    lla_node *parent;
     int is_leaf;
 };
 
@@ -62,6 +63,9 @@ void print_tree_helper(lla_node *node, int depth)
     }
 
     printf("is_leaf: %d, size: %d, depth: %d, tau: %.4f, tau_k: %.4f, win_start: %d, win_end: %d\n", node->is_leaf, node->size, depth, node->tau, node->TAU_K, node->window_start, node->window_end);
+    if(node->parent){
+        //printf("parent: s: %d, e: %d\n", node->parent->window_start, node->parent->window_end);
+    }
 
     print_tree_helper(node->left, depth + 1);
     print_tree_helper(node->right, depth + 1);
@@ -97,7 +101,7 @@ int log_base_2(int n)
 // ################# EOF HELPER FUNCTIONS ##############
 
 // ################# BEGIN MAIN FUNCTIONS ###################
-lla_node *create_lla_node(int start, int end)
+lla_node *create_lla_node(lla_node* parent, int start, int end)
 {
     lla_node *node = (lla_node *)malloc(sizeof(lla_node));
     if (!node)
@@ -114,6 +118,7 @@ lla_node *create_lla_node(int start, int end)
     node->tau = 0;         // set as zero before any insertions happen
     node->TAU_K = 0;       // to be init later in init_balancing_tree()
     node->is_leaf = false; // initially set as false, and set later true only for leafs in init_balancing_tree()
+    node->parent = parent;
 
     return node;
 }
@@ -146,8 +151,8 @@ void init_balancing_tree(lla_node *node, int depth, int MAX_DEPTH, int WINDOW_SI
     node->TAU_K = TAU_K;
     // printf("tau_k: %.2f\n", TAU_K);
 
-    node->left = create_lla_node(parent_window_start, mid_point);
-    node->right = create_lla_node(mid_point + 1, parent_window_end);
+    node->left = create_lla_node(node, parent_window_start, mid_point);
+    node->right = create_lla_node(node, mid_point + 1, parent_window_end);
 
     init_balancing_tree(node->left, depth + 1, MAX_DEPTH, WINDOW_SIZE, TAU_0, TAU_D);
     init_balancing_tree(node->right, depth + 1, MAX_DEPTH, WINDOW_SIZE, TAU_0, TAU_D);
@@ -167,7 +172,7 @@ lla *create_lla(int N, int C, double TAU_0, double TAU_D)
     zero_array(my_lla->arr, N * C);
 
     // Create balancing tree
-    lla_node *root = create_lla_node(0, (N * C) - 1);
+    lla_node *root = create_lla_node(null, 0, (N * C) - 1);
     my_lla->root = root;
 
     // Init the balancing tree on the array
@@ -310,8 +315,15 @@ void insert(lla *lla, int x)
     }
     else
     { // we need to rebalance, got first ansestor in threshhold
-        insert_and_distribute_array_range(arr, node->window_start, node->window_end, x);
-        printf("insert %d, and redistribute range [%d, %d]\n", x, node->window_start, node->window_end);
+        lla_node* parent = node->parent;
+
+        if(!parent){
+            printf("insert failed");
+            exit(1);
+        }
+
+        insert_and_distribute_array_range(arr, parent->window_start, parent->window_end, x);
+        printf("insert %d, and redistribute range [%d, %d]\n", x, parent->window_start, parent->window_end);
     }
     return;
 }
