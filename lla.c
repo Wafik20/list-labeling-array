@@ -125,6 +125,11 @@ void init_balancing_tree(lla_node *node, int depth, int MAX_DEPTH, int WINDOW_SI
 
 lla *create_lla(int N, int C, double TAU_0, double TAU_D)
 {
+    if(C >= N || TAU_0 > TAU_D){
+        printf("Illegal coefficients: C >= N or TAU_0 > TAU_D \n");
+        exit(1);
+    }
+
     lla *my_lla = (lla *)malloc(sizeof(lla));
     if (!my_lla)
     {
