@@ -3,6 +3,8 @@
 
 // ################# BEGIN MACROS ###################
 #define null NULL
+#define true 0
+#define false 1
 // ################# EOF STRUCTS ###################
 
 // ################# BEGIN STRUCTS ###################
@@ -13,10 +15,12 @@ struct lla_node
 {
     int window_start;
     int window_end;
+    double tau;
     double TAU_K;
     int size;
     lla_node *left;
     lla_node *right;
+    int is_leaf;
 };
 
 struct lla
@@ -26,7 +30,9 @@ struct lla
     int N;
     int C;
     double TAU_0;
-    double TAU_d;
+    double TAU_D;
+    int MAX_DEPTH;
+    int WINDOW_SIZE;
 };
 // ################# EOF STRUCTS ###################
 
@@ -47,20 +53,24 @@ void zero_array(int *arr, int size)
     }
 }
 
-void print_tree_helper(lla_node* node, int depth){
-    if (!node) {
+void print_tree_helper(lla_node *node, int depth)
+{
+    if (!node)
+    {
         return;
     }
 
-    printf("size: %d, depth: %d, tau_k: %.4f, win_start: %d, win_end: %d\n", node->size, depth, node->TAU_K, node->window_start, node->window_end);
+    printf("is_leaf: %d, size: %d, depth: %d, tau_k: %.4f, win_start: %d, win_end: %d\n", node->is_leaf, node->size, depth, node->TAU_K, node->window_start, node->window_end);
 
     print_tree_helper(node->left, depth + 1);
     print_tree_helper(node->right, depth + 1);
 }
 
-void print_lla(lla* my_lla){
-    lla_node* root = my_lla->root;
-    if (root == null) {
+void print_lla(lla *my_lla)
+{
+    lla_node *root = my_lla->root;
+    if (root == null)
+    {
         printf("The LLA is empty.\n");
         return;
     }
@@ -70,9 +80,11 @@ void print_lla(lla* my_lla){
     return;
 }
 
-int log_base_2(int n) {
+int log_base_2(int n)
+{
     int result = 0;
-    while (n >>= 1) {
+    while (n >>= 1)
+    {
         result++;
     }
     return result;
@@ -91,10 +103,12 @@ lla_node *create_lla_node(int start, int end)
 
     node->window_start = start;
     node->window_end = end;
-    node->left = NULL;
-    node->right = NULL;
-    node->size = 0;
-    node->TAU_K = 0;
+    node->left = NULL;     // to be init later in init_balancing_tree()
+    node->right = NULL;    // to be init later in init_balancing_tree()
+    node->size = 0;        // set as zero before any insertions happen
+    node->tau = 0;         // set as zero before any insertions happen
+    node->TAU_K = 0;       // to be init later in init_balancing_tree()
+    node->is_leaf = false; // initially set as false, and set later true only for leafs in init_balancing_tree()
 
     return node;
 }
@@ -108,24 +122,24 @@ void init_balancing_tree(lla_node *node, int depth, int MAX_DEPTH, int WINDOW_SI
     int parent_window_end = node->window_end;
     int mid_point = (parent_window_start + parent_window_end) / 2;
 
-    //printf("%d, %d, %d\n", parent_window_end, parent_window_start, mid_point, depth);
-    //printf("WINDOW_SIZE = %d, TAU_K = %.2f, depth = %d, MAX_DEPTH = %d, start = %d, end = %d\n", WINDOW_SIZE, node->TAU_K, depth, MAX_DEPTH, parent_window_start, parent_window_end);
-
+    // printf("%d, %d, %d\n", parent_window_end, parent_window_start, mid_point, depth);
+    // printf("WINDOW_SIZE = %d, TAU_K = %.2f, depth = %d, MAX_DEPTH = %d, start = %d, end = %d\n", WINDOW_SIZE, node->TAU_K, depth, MAX_DEPTH, parent_window_start, parent_window_end);
 
     // Base case: if window size reached, stop recursion
-    //if (parent_window_end - parent_window_start + 1 <= WINDOW_SIZE)
-    if(depth == MAX_DEPTH)
+    // if (parent_window_end - parent_window_start + 1 <= WINDOW_SIZE)
+    if (depth == MAX_DEPTH)
     {
         // Set tau_k = tau_d
         node->TAU_K = TAU_D;
-        //printf("tau_k: %.2f\n", TAU_D);
+        node->is_leaf = true;
+        // printf("tau_k: %.2f\n", TAU_D);
         return;
     }
 
     double TAU_K = TAU_0 + ((TAU_D - TAU_0) * ((double)depth / MAX_DEPTH));
-    //printf("tau_k = %f + ((%f - %f) * (%d / %d))\n", TAU_0, TAU_D, TAU_0, depth, MAX_DEPTH);
+    // printf("tau_k = %f + ((%f - %f) * (%d / %d))\n", TAU_0, TAU_D, TAU_0, depth, MAX_DEPTH);
     node->TAU_K = TAU_K;
-    //printf("tau_k: %.2f\n", TAU_K);
+    // printf("tau_k: %.2f\n", TAU_K);
 
     node->left = create_lla_node(parent_window_start, mid_point);
     node->right = create_lla_node(mid_point + 1, parent_window_end);
@@ -134,11 +148,15 @@ void init_balancing_tree(lla_node *node, int depth, int MAX_DEPTH, int WINDOW_SI
     init_balancing_tree(node->right, depth + 1, MAX_DEPTH, WINDOW_SIZE, TAU_0, TAU_D);
 }
 
-lla *create_lla(int N, int C, double TAU_0, double TAU_d)
+lla *create_lla(int N, int C, double TAU_0, double TAU_D)
 {
     lla *my_lla = (lla *)malloc(sizeof(lla));
-
     my_lla->arr = (int *)malloc(sizeof(int) * N * C);
+
+    my_lla->N = N;
+    my_lla->C = C;
+    my_lla->TAU_0 = TAU_0;
+    my_lla->TAU_D = TAU_D;
 
     // Init array first
     zero_array(my_lla->arr, N * C);
@@ -151,10 +169,141 @@ lla *create_lla(int N, int C, double TAU_0, double TAU_d)
     int WINDOW_SIZE = log_base_2(N);
     int num_leaves = (C * N) / WINDOW_SIZE;
     int MAX_DEPTH = log_base_2(num_leaves);
-    //printf("window size: %d\n", window_size);
-    init_balancing_tree(root, 0, MAX_DEPTH, WINDOW_SIZE, TAU_0, TAU_d);
+
+    my_lla->WINDOW_SIZE = WINDOW_SIZE;
+    my_lla->MAX_DEPTH = MAX_DEPTH;
+    // printf("window size: %d\n", window_size);
+    init_balancing_tree(root, 0, MAX_DEPTH, WINDOW_SIZE, TAU_0, TAU_D);
 
     return my_lla;
+}
+
+// Should return first ansestor in threshhold or a leaf indicating that insertion is legal.
+lla_node *insert_help(lla_node *node, int *arr, int depth, int MAX_DEPTH, int x)
+{
+
+    int window_start = node->window_start;
+    int window_end = node->window_end;
+    int partition_size = window_end - window_start + 1;
+    int element_at_window_end = arr[window_end];
+    int new_size = node->size + 1;
+    double new_tau = ((double)new_size / (partition_size));
+
+    if (new_tau > node->TAU_K)
+    {
+        printf("exceeded threshhold, return nearest anscestor in threshhold");
+        return node; // should be node->parent
+    }
+
+    // Set new size and density after insertion
+    node->size = new_size;
+    node->tau = new_tau;
+
+    if (depth == MAX_DEPTH)
+    {
+        return node;
+    }
+
+    if (x > element_at_window_end)
+    { /* traverse right */
+        insert_help(node->right, arr, depth + 1, MAX_DEPTH, x);
+    }
+    else
+    { /* traverse left */
+        insert_help(node->left, arr, depth + 1, MAX_DEPTH, x);
+    }
+    return null;
+}
+// a very long sorted array, and an element
+// You get the whole array, the start index where to start spreading out, the end index where to stop spreading out, the element to be inserted.
+// input arr=[......, 1, 5, 0, 0, 0, ......], start_index, end_index, x = 2
+// insert the element between start_index, end_index and include them, and then do the spreading out
+// output: [......, 1, 0, 2, 0, 5, .......] // sorted and spread out
+//
+void insert_and_distribute_array_range(int *arr, int start_index, int end_index, int x)
+{
+
+    int range_size = end_index - start_index + 1;
+    int non_zero_count = 0;
+    int *temp = (int *)malloc(range_size * sizeof(int));
+    int temp_idx = 0;
+    int x_inserted = 0;
+
+    for (int i = start_index; i <= end_index; i++)
+    {
+        if (arr[i] != 0)
+        {
+            if (!x_inserted && x < arr[i])
+            {
+                temp[temp_idx++] = x;
+                x_inserted = 1;
+                non_zero_count++;
+            }
+            temp[temp_idx++] = arr[i];
+            non_zero_count++;
+        }
+    }
+
+    if (!x_inserted)
+    {
+        temp[temp_idx++] = x;
+        non_zero_count++;
+    }
+
+    for (int i = start_index; i <= end_index; i++)
+    {
+        arr[i] = 0;
+    }
+
+    if (non_zero_count > 0)
+    {
+        int spacing = range_size / non_zero_count;
+        int remainder = range_size % non_zero_count;
+        int pos = 0;
+
+        for (int i = 0; i < non_zero_count; i++)
+        {
+            arr[start_index + pos] = temp[i];
+
+            int step = spacing;
+            if (i < remainder)
+            {
+                step++;
+            }
+            pos += step;
+
+            if (pos >= range_size && i < non_zero_count - 1)
+            {
+                pos = range_size - (non_zero_count - 1 - i);
+            }
+        }
+    }
+
+    free(temp);
+}
+
+void insert(lla *lla, int x)
+{
+    // 1- traverse the tree
+    lla_node *root = lla->root;
+    int *arr = lla->arr;
+    lla_node *node = insert_help(root, arr, 0, x, lla->MAX_DEPTH); // either a leaf, or nearest ancestor in threshhold
+
+    if (!node)
+    {
+        printf("insert failed");
+        exit(1);
+    }
+
+    if (node->is_leaf)
+    { // we succeeded, got a leaf
+        insert_and_distribute_array_range(arr, node->window_start, node->window_end, x);
+    }
+    else
+    { // we need to rebalance, got first ansestor in threshhold
+        insert_and_distribute_array_range(arr, node->window_start, node->window_end, x);
+    }
+    return;
 }
 // ################# EOF MAIN FUNCTIONS ###################
 
@@ -167,6 +316,7 @@ int main()
     double TAU_D = 0.75;
 
     lla *my_lla = create_lla(N, C, TAU_0, TAU_D);
+    insert(my_lla, 1);
     print_lla(my_lla);
     return 0;
 }
