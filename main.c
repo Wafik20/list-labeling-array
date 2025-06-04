@@ -63,8 +63,9 @@ void print_tree_helper(lla_node *node, int depth)
     }
 
     printf("is_leaf: %d, size: %d, depth: %d, tau: %.4f, tau_k: %.4f, win_start: %d, win_end: %d\n", node->is_leaf, node->size, depth, node->tau, node->TAU_K, node->window_start, node->window_end);
-    if(node->parent){
-        //printf("parent: s: %d, e: %d\n", node->parent->window_start, node->parent->window_end);
+    if (node->parent)
+    {
+        // printf("parent: s: %d, e: %d\n", node->parent->window_start, node->parent->window_end);
     }
 
     print_tree_helper(node->left, depth + 1);
@@ -83,7 +84,6 @@ void print_lla(lla *my_lla)
     int arr_size = my_lla->N * my_lla->C;
     print_array(my_lla->arr, arr_size);
 
-
     print_tree_helper(root, 0);
 
     return;
@@ -101,7 +101,7 @@ int log_base_2(int n)
 // ################# EOF HELPER FUNCTIONS ##############
 
 // ################# BEGIN MAIN FUNCTIONS ###################
-lla_node *create_lla_node(lla_node* parent, int start, int end)
+lla_node *create_lla_node(lla_node *parent, int start, int end)
 {
     lla_node *node = (lla_node *)malloc(sizeof(lla_node));
     if (!node)
@@ -191,7 +191,8 @@ lla *create_lla(int N, int C, double TAU_0, double TAU_D)
 // Should return first ansestor in threshhold or a leaf indicating that insertion is legal.
 lla_node *insert_help(lla_node *node, int *arr, int depth, int MAX_DEPTH, int x)
 {
-    if(!node){
+    if (!node)
+    {
         return null;
     }
 
@@ -300,7 +301,8 @@ void insert(lla *lla, int x)
     lla_node *root = lla->root;
     int *arr = lla->arr;
 
-    if(root->tau >= lla->TAU_0){ /* Don't insert when the array's density exceeds TAU_0 */
+    if (root->tau >= lla->TAU_0)
+    { /* Don't insert when the array's density exceeds TAU_0 */
         printf("insert failed: Root exceeded treshhold density. Increase N!");
         exit(1);
     }
@@ -320,9 +322,10 @@ void insert(lla *lla, int x)
     }
     else
     { // we need to rebalance, got first ansestor in threshhold
-        lla_node* parent = node->parent;
+        lla_node *parent = node->parent;
 
-        if(!parent){
+        if (!parent)
+        {
             printf("insert failed");
             exit(1);
         }
@@ -333,6 +336,41 @@ void insert(lla *lla, int x)
     return;
 }
 // ################# EOF MAIN FUNCTIONS ###################
+
+// ################# BEGIN CLEANUP FUNCTIONS ###################
+void free_lla_tree(lla_node *node)
+{
+    if (!node)
+        return;
+
+    free_lla_tree(node->left);
+    free_lla_tree(node->right);
+
+    free(node);
+}
+
+void free_lla(lla *my_lla)
+{
+    if (!my_lla)
+        return;
+
+    free_lla_tree(my_lla->root);
+
+    if (my_lla->arr)
+        free(my_lla->arr);
+
+    free(my_lla);
+}
+
+void cleanup_lla(lla **my_lla)
+{
+    if (my_lla && *my_lla)
+    {
+        free_lla(*my_lla);
+        *my_lla = NULL;
+    }
+}
+// ################# EOF CLEANUP FUNCTIONS ###################
 
 // ################# BEGIN MAIN ###################
 int main()
@@ -349,6 +387,7 @@ int main()
     insert(my_lla, 2);
     insert(my_lla, 20);
     print_lla(my_lla);
+    cleanup_lla(&my_lla);
     return 0;
 }
 // ################# EOF MAIN ###################
