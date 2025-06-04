@@ -115,8 +115,8 @@ int main() {
 
 ## Performance Characteristics
 
-- Insertion: O(log²n) amortized time
-- Elements moved per insertion: O(log²n)
+- Insertion: O(log n) amortized time
+- Elements moved per insertion: O(log²n) Amortized
 - Space: O(n) where n is the number of elements
 - Memory overhead: O(log n) for the balancing tree
 
@@ -126,4 +126,4 @@ int main() {
 
 ## Contributing
 
-Feel free to submit issues and enhancement requests!
+Reach out at wafik.wt@gmail.com.
