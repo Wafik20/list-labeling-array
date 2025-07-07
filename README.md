@@ -4,8 +4,8 @@ A C implementation of a List Labeling Array data structure that maintains a sort
 
 ### Key Features
 
-- O(log n) insertion time
-- O(log²n) amortized elements moved per insertion
+- O(log^2 n) insertion time
+- O(log^2 n) amortized elements moved per insertion
 - Density-based rebalancing strategy
 - Memory-efficient implementation
 - Configurable parameters for balancing
